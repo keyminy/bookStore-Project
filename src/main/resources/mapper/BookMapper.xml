@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.meta.book.mapper.BookMapper">
+	<!-- 1. 책 리스트 보기 -->
+	<select id="list" resultType="com.meta.book.vo.BookVO">
+		SELECT book.book_no,title,author,publisher,TO_CHAR(pubdate,'YYYY-MM-DD') as pubdate, description, price, image, cate_no, stock
+		from book, stock
+		where book.book_no = stock.book_no
+		order by book.book_no desc
+	</select>
+
+	<!-- 2. 책 1개 디테일 정보 보기 -->
+	<select id="detailBookInfo" resultType="com.meta.book.vo.BookVO">
+		SELECT book.book_no,title,author,publisher,TO_CHAR(pubdate,'YYYY-MM-DD') as pubdate, description, price, image, th_image, cate_no,stock,itemSellStatus
+		from book,stock
+		where book.book_no = #{book_no} AND book.book_no = stock.book_no
+	</select>
+
+	<!-- 3. 책 정보 지우기 -->
+	<delete id="delete" parameterType="com.meta.book.vo.BookVO">
+			delete from book
+			where book_no = #{book_no}
+  </delete>
+
+	<!-- 4. 책 정보 수정하기 -->
+	<update id="update" parameterType="com.meta.book.vo.BookVO">
+			update book
+			set title = #{title},
+				author = #{author},
+				publisher = #{publisher},
+				pubdate = to_date(#{pubdate}, 'YYYY-MM-DD'),
+				price = #{price},
+				description = #{description},
+				image = #{image},
+		    th_image = #{th_image},
+		    cate_no = #{cate_no},
+		    itemSellStatus = #{itemSellStatus}
+			where book_no = #{book_no}
+	</update>
+
+	<!-- 5. 책 정보 등록하기 -->
+	<insert id="insert" parameterType="com.meta.book.vo.BookVO">
+		insert into book (book_no, title, author, publisher, pubdate, description, image, price, cate_no, th_image, itemSellStatus)
+		values (seq_book_no.nextval, #{title}, #{author}, #{publisher}, sysdate, #{description}, #{image}, #{price}, #{cate_no}, #{th_image}, #{itemSellStatus})
+	</insert>
+
+	<!-- 6. 카테고리 정보 가져오기 -->
+	<select id="cateList" resultType="com.meta.book.vo.CateVO">
+			select *
+			from category
+	</select>
+
+	<!-- 7. 책 리스트 rownum 적용 -->
+	<select id="rownumBookList" resultType="com.meta.book.vo.BookVO">
+		SELECT  rownum, x.*
+		FROM (SELECT book.book_no,title,author,publisher,TO_CHAR(pubdate,'YYYY-MM-DD') as pubdate, description, price, image, cate_no, stock
+			  from book, stock
+			  where book.book_no = stock.book_no
+			  ORDER BY book.book_no) x
+	</select>
+
+	<!-- 8. 카테고리별  책 개수 가져오기 -->
+	<select id="cateCount" resultType="Integer">
+		select count(*)
+		from book
+		where cate_no = #{number}
+	</select>
+
+	<!-- 메인페이지 북리스트(/main/main), (/book/list)의 북리스트 -->
+	<!-- ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ -->
+	<!-- 메인페이지의 카테고리 별 책리스트 select -->	
+	<select id="selectMainBookList" resultType="com.meta.book.vo.BookVO">
+		<![CDATA[
+			SELECT book.book_no,title,author,publisher,TO_CHAR(pubdate,'YYYY-MM-DD') as pubdate, description, price, image, cate_no,stock,itemSellStatus
+			FROM book,stock
+			WHERE ROWNUM<=18 AND book.book_no = stock.book_no
+			ORDER BY book_no
+		]]>
+	</select>
+	<!-- 메인페이지의 카테고리 별 책리스트 select -->	
+	<select id="selectBookListByCateNo" resultType="com.meta.book.vo.BookVO">
+		<![CDATA[
+			SELECT book.book_no,title,author,publisher,TO_CHAR(pubdate,'YYYY-MM-DD') as pubdate, description, price, image, cate_no,stock,itemSellStatus
+			FROM book,stock
+			WHERE book.book_no=stock.book_no AND cate_no=#{cate_no} AND ROWNUM<=12
+			ORDER BY book_no
+		]]>
+	</select>
+	<!-- /book/list의 카테고리 별 책리스트 select -->	
+	<select id="userBookList" resultType="com.meta.book.vo.BookVO">
+		SELECT rnum,book_no,title,author,publisher,pubdate,description, price, image, cate_no,stock,itemSellStatus
+		FROM
+		(
+		     SELECT ROWNUM rnum,book_no,title,author,publisher,pubdate,description, price, image, cate_no,stock,itemSellStatus
+		     FROM
+		     	(
+		            SELECT book.book_no,title,author,publisher,TO_CHAR(pubdate,'YYYY-MM-DD') as pubdate
+		            ,description, price, image, cate_no,stock,itemSellStatus
+		            FROM book,stock
+		            WHERE book.book_no = stock.book_no
+ 					<include refid="cate_search"/>
+		            ORDER BY book_no DESC
+		        )
+		)
+		WHERE rnum BETWEEN #{startRow} AND #{endRow} 
+	</select>
+	<!-- 카테고리 번호가 있는지 없는지에 따른 search WHERE절 -->
+	<!-- cate_no가 없으면 전체 bookList보이게 -->
+	<sql id="cate_search">
+		<choose>
+			<when test="cate_no!=null and cate_no.toString()!=''">
+				AND cate_no=#{cate_no} 
+				<!-- 검색어가 있다면?? -->
+				<if test="word!=null and word.toString()!=''">
+					<if test="key=='t'.toString()">
+		 				AND title LIKE '%'||#{word}||'%'
+		 			</if>
+		 			<if test="key=='a'.toString()">
+		 				AND AUTHOR LIKE '%'||#{word}||'%'
+		 			</if>
+		 			<if test="key=='p'.toString()">
+		 				AND PUBLISHER LIKE '%'||#{word}||'%'
+		 			</if>
+				</if>
+			</when>
+			<otherwise>
+				<!-- 검색어가 있다면?? -->
+				<if test="word!=null and word.toString()!=''">
+					<if test="key=='t'.toString()">
+		 				AND title LIKE '%'||#{word}||'%'
+		 			</if>
+		 			<if test="key=='a'.toString()">
+		 				AND AUTHOR LIKE '%'||#{word}||'%'
+		 			</if>
+		 			<if test="key=='p'.toString()">
+		 				AND PUBLISHER LIKE '%'||#{word}||'%'
+		 			</if>
+				</if>
+			</otherwise>
+		</choose>
+	</sql>
+	<!-- 책 전체 갯수 구하기 -->
+ 	<select id="getTotalRow" resultType="java.lang.Long">
+ 		SELECT COUNT(*) FROM book
+ 		WHERE 1=1
+ 		<include refid="cate_search"/>
+ 	</select>
+ 	
+ 	<!-- view페이지에서 연관된 카테고리별 북리스트 보여주기 -->
+	<select id="relatedBookList" resultType="com.meta.book.vo.BookVO">
+	<![CDATA[
+		SELECT book.book_no,title,author,publisher,price, image, th_image, cate_no,stock,itemSellStatus
+		from book,stock
+		where book.book_no != #{book_no} 
+		AND cate_no = #{cate_no} 
+		AND book.book_no = stock.book_no 
+		AND ROWNUM<=8
+	]]>
+	</select>
+</mapper>

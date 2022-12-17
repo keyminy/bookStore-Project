@@ -1,0 +1,48 @@
+@charset "UTF-8";
+
+input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button
+	{
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.addrBtn {
+	display: flex;
+}
+
+.telDiv {
+	display: flex;
+}
+
+.telDiv>input {
+	width: 100%;
+}
+
+.tel_form {
+	width: 15%;
+}
+
+.addrBtn button {
+	margin-left: 10px;
+}
+
+.order-form {
+	background-color: white;
+}
+
+#nameForm {
+	width: 100%;
+}
+
+#roadAddress, #zipcode {
+	background-color: white;
+}
+
+.checkout-header {
+	margin-left: 20px;
+	color: darkgray
+}
+
+.changeplaceholder::placeholder {
+	color: red;
+}

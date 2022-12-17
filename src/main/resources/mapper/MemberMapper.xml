@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.meta.member.mapper.MemberMapper">
+	  <!-- 1.member id찾기 -->
+	 	<select id="findByMemberId" resultType="com.meta.member.vo.MemberVO">
+	    SELECT *
+	    FROM member
+	    WHERE id=#{id}
+	 	</select>
+	 	<!-- 2.회원가입 -->
+  	<insert id="register">
+  		INSERT INTO member
+  		(
+  		m_no,
+		id,
+		password,
+		name,
+		phone, 
+		email,
+		zipcode,
+		roadAddress,
+		otherAddress,
+		cash
+		)
+		VALUES
+		(
+		member_seq.nextval,
+		#{id},
+		#{password},
+		#{name},
+		#{phone},
+		#{email},
+		#{zipcode},
+		#{roadAddress},
+		#{otherAddress},
+		100000
+		)
+	</insert>
+	 	<!-- 3-1.회원수정 -->
+  	 <update id="update">
+	  	UPDATE member 
+		SET 
+		password=#{newpassword},
+		phone=#{phone},
+		email=#{email},
+		zipcode=#{zipcode},
+		roadAddress=#{roadAddress},
+		otherAddress=#{otherAddress}
+		WHERE m_no=#{m_no}
+	  </update>
+	 	<!-- 3-2.회원수정,번호로 회원 객체찾기 -->
+  	 <select id="findByMno" resultType="com.meta.member.vo.MemberVO">
+		  	SELECT *
+		    FROM member
+		    WHERE m_no=#{m_no}
+	  </select>
+  	 <!-- 4.아이디 중복체크 -->
+  	<select id="checkId" resultType="String">
+  		SELECT id FROM member 
+  		WHERE id = #{id}
+  	</select>
+
+	<!-- 관리자 -->
+	<!-- 1. 회원 리스트 -->
+	<select id="memberList" resultType="com.meta.member.vo.MemberVO">
+		<![CDATA[
+			select m_no, id, password, name, zipcode, roadAddress, otherAddress, phone, email, grade, TO_CHAR(regDate, 'YYYY-MM-DD') as regDate,cash,point
+			from member
+			order by m_no desc
+		]]>
+	</select>
+
+	<!-- 2. 회원 한명의 정보 -->
+	<select id="memberDetailInfo" resultType="com.meta.member.vo.MemberVO">
+		<![CDATA[
+		select *
+		from member
+		where m_no = #{m_no}
+		]]>
+	</select>
+
+	<update id="memberUpdate">
+		<![CDATA[
+			UPDATE member
+			SET
+			    name = #{name},
+				password = #{newpassword},
+				phone = #{phone},
+				email = #{email},
+				zipcode = #{zipcode},
+				roadAddress = #{roadAddress},
+				otherAddress = #{otherAddress},
+				grade = #{grade}
+			WHERE m_no = #{m_no}
+		]]>
+	</update>
+
+	<delete id="memberDelete">
+		<![CDATA[
+			delete from member
+			where m_no = #{m_no}
+		]]>
+	</delete>
+
+	<select id="rownumMemberList" resultType="com.meta.member.vo.MemberVO">
+		select rownum, m_no, id, password, name, zipcode, roadAddress, otherAddress, phone, email, grade, TO_CHAR(regDate, 'YYYY-MM-DD') as regDate
+		from MEMBER
+		ORDER BY m_no
+	</select>
+  </mapper>
